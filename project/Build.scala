@@ -33,6 +33,7 @@ object Build extends Build {
         exclude("com.sun.jdmk", "jmxtools")
         exclude("com.sun.jmx", "jmxri")
         excludeAll ExclusionRule(organization = "org.slf4j")
+      "io.github.cloudify" %% "scalazon" % "0.11"
     )
 
     val testDependencies = Seq(
@@ -42,6 +43,7 @@ object Build extends Build {
 
     val resolvers = Seq(
       "amateras-repo" at "http://amateras.sourceforge.jp/mvn/"
+      "bintray-sbt-plugin-releases" at "http://dl.bintray.com/content/sbt/sbt-plugin-releases"
     )
   }
 }
