@@ -11,6 +11,7 @@ case class OptionsConfig(
   kafkaTopicName: String = "logs",
   outputFormat: String = "string",
   filePath: String = "/tmp",
+  kinesisStreamName:String = "logs",
   fileRollSize: Int = Int.MaxValue, // in bytes
   totalEvents: Long = 1000,
   flushBatch: Int = 10000,
