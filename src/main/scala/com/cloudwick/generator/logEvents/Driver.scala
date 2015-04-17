@@ -28,18 +28,19 @@ object Driver extends App {
       "\t where,\n" +
       "\t\ttext - string formatted by tabs in between columns\n" +
       "\t\tavro - string formatted using avro serialization\n"
-      //"\t\tseq - string formatted using sequence serialization"
+    //"\t\tseq - string formatted using sequence serialization"
     opt[String]('d', "destination") action { (x, c) =>
       c.copy(destination = x)
     } validate { x: String =>
-      if (x == "file" || x == "kafka")
+      if (x == "file" || x == "kafka" || x == "kinesis")
         success
       else
-        failure("supported destination formats are: file, kafka")
+        failure("supported destination formats are: file, kafka, kinesis")
     } text "destination where the generator writes data to, defaults to: 'file'\n" +
       "\t where,\n" +
       "\t\tfile - output's directly to flat files\n" +
-      "\t\tkafka - output to specified kafka topic\n"
+      "\t\tkafka - output to specified kafka topic\n" +
+      "\t\tkinesis - output to specified kinesis topic\n"
     opt[Int]('s', "fileRollSize") action { (x, c) =>
       c.copy(fileRollSize = x)
     } text "size of the file to roll in bytes, defaults to: Int.MaxValue (don't roll files)"
@@ -52,6 +53,9 @@ object Driver extends App {
     opt[String]('q', "kafkaTopicName") action { (x, c) =>
       c.copy(kafkaTopicName = x)
     } text "name of the kafka topic to write data to, defaults to: 'logs'"
+    opt[String]('n', "kinesisStreamName") action { (x, c) =>
+      c.copy(kinesisStreamName = x)
+    } text "name of the kinesis stream to write data to, defaults to: 'logs'"
     opt[Long]('e', "totalEvents") action { (x, c) =>
       c.copy(totalEvents = x)
     } text "total number of events to generate, default: 1000"
@@ -75,7 +79,7 @@ object Driver extends App {
 
   optionsParser.parse(args, OptionsConfig()) map { config =>
     logger.info(s"Successfully parsed command line args")
-    config.getClass.getDeclaredFields.map(_.getName).zip( config.productIterator.to ).toMap.foreach { configElements =>
+    config.getClass.getDeclaredFields.map(_.getName).zip(config.productIterator.to).toMap.foreach { configElements =>
       logger.info("Configuration element '{}' = '{}'", configElements._1, configElements._2)
     }
     try {
@@ -88,3 +92,5 @@ object Driver extends App {
     logger.error("Failed to parse command line arguments")
   }
 }
+
+43
