@@ -6,13 +6,13 @@ object Build extends Build {
   val ScalaVersion = "2.10.4"
 
   lazy val root = Project("generator", file(".")) settings(
-      version := "0.5",
-      scalaVersion := ScalaVersion,
-      organization := "com.cloudwick",
-      scalacOptions ++= Seq("-unchecked", "-deprecation"),
-      libraryDependencies ++= Dependencies.compile,
-      libraryDependencies ++= Dependencies.testDependencies,
-      resolvers ++= Dependencies.resolvers
+    version := "0.5",
+    scalaVersion := ScalaVersion,
+    organization := "com.cloudwick",
+    scalacOptions ++= Seq("-unchecked", "-deprecation"),
+    libraryDependencies ++= Dependencies.compile,
+    libraryDependencies ++= Dependencies.testDependencies,
+    resolvers ++= Dependencies.resolvers
     )
 
   object Dependencies {
@@ -32,7 +32,7 @@ object Build extends Build {
         exclude("javax.jms", "jms")
         exclude("com.sun.jdmk", "jmxtools")
         exclude("com.sun.jmx", "jmxri")
-        excludeAll ExclusionRule(organization = "org.slf4j")
+        excludeAll ExclusionRule(organization = "org.slf4j"),
       "io.github.cloudify" %% "scalazon" % "0.11"
     )
 
@@ -42,8 +42,9 @@ object Build extends Build {
     )
 
     val resolvers = Seq(
-      "amateras-repo" at "http://amateras.sourceforge.jp/mvn/"
-      "bintray-sbt-plugin-releases" at "http://dl.bintray.com/content/sbt/sbt-plugin-releases"
+      "amateras-repo" at "http://amateras.sourceforge.jp/mvn/",
+      "BintrayJCenter" at "http://jcenter.bintray.com"
     )
   }
+
 }
