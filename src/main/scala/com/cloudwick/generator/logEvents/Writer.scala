@@ -11,7 +11,7 @@ import java.io.File
 /**
  * Persists mocked events to specified file.
  * This class can persist events in both Text formats (csv, tsv) & also in Avro.
- * @author ashrith 
+ * @author ashrith
  */
 class Writer(eventsStartRange: Int,
              eventsEndRange: Int,
@@ -23,32 +23,32 @@ class Writer(eventsStartRange: Int,
   lazy val ipGenerator = new IPGenerator(config.ipSessionCount, config.ipSessionLength)
   lazy val logEventGen = new LogGenerator(ipGenerator)
   lazy val schemaDesc = """
-                        |{
-                        | "type":"record",
-                        | "name":"LogEvent",
-                        | "fields":[
-                        |   {"name":"OriginatingIp","type":"string"},
-                        |   {"name":"ClientIdentity","type":"string"},
-                        |   {"name":"UserID","type":"string"},
-                        |   {"name":"TimeStamp","type":"string"},
-                        |   {"name":"RequestType","type":"string"},
-                        |   {"name":"RequestPage","type":"string"},
-                        |   {"name":"HTTPProtocolVersion","type":"string"},
-                        |   {"name":"ResponseCode","type":"int"},
-                        |   {"name":"ResponseSize","type":"int"},
-                        |   {"name":"Referrer","type":"string"},
-                        |   {"name":"UserAgent","type":"string"}
-                        |  ]
-                        |}
+                          |{
+                          | "type":"record",
+                          | "name":"LogEvent",
+                          | "fields":[
+                          |   {"name":"OriginatingIp","type":"string"},
+                          |   {"name":"ClientIdentity","type":"string"},
+                          |   {"name":"UserID","type":"string"},
+                          |   {"name":"TimeStamp","type":"string"},
+                          |   {"name":"RequestType","type":"string"},
+                          |   {"name":"RequestPage","type":"string"},
+                          |   {"name":"HTTPProtocolVersion","type":"string"},
+                          |   {"name":"ResponseCode","type":"int"},
+                          |   {"name":"ResponseSize","type":"int"},
+                          |   {"name":"Referrer","type":"string"},
+                          |   {"name":"UserAgent","type":"string"}
+                          |  ]
+                          |}
                         """.stripMargin
 
-  lazy val sleepTime = if(config.eventsPerSec == 0) 0 else 1000/config.eventsPerSec
+  lazy val sleepTime = if (config.eventsPerSec == 0) 0 else 1000 / config.eventsPerSec
 
   def threadName = Thread.currentThread().getName
 
   def formatEventToString(logEvent: LogEvent) = {
     s"${logEvent.ip} - - [${logEvent.timestamp}]" + " \"GET " + logEvent.request + " HTTP/1.1\"" +
-    s" ${logEvent.responseCode} ${logEvent.responseSize} " + "\"-\" \"" + logEvent.userAgent + "\"\n"
+      s" ${logEvent.responseCode} ${logEvent.responseSize} " + "\"-\" \"" + logEvent.userAgent + "\"\n"
   }
 
   def avroEvent(event: LogEvent) = {
@@ -77,10 +77,11 @@ class Writer(eventsStartRange: Int,
     var kafkaHandler: KafkaHandler = null
     var kafkaAvroHandler: KafkaAvroHandler = null
     var eventsAvro = new ArrayBuffer[GenericRecord](config.flushBatch)
-    var eventsText  = new ArrayBuffer[String](config.flushBatch)
+    var eventsText = new ArrayBuffer[String](config.flushBatch)
     val ipGenerator = new IPGenerator(config.ipSessionCount, config.ipSessionLength)
     val logEventGenerator = new LogGenerator(ipGenerator)
     var logEvent: LogEvent = null
+    var kinesisHandler: KinesisHandler = null
 
     logger.debug("Initializing thread: {}", threadName)
 
@@ -94,12 +95,15 @@ class Writer(eventsStartRange: Int,
           fileHandlerText.openFile()
         }
       }
-      else {
+      else if (config.destination == "kafka") {
         if (config.outputFormat == "avro") {
           kafkaAvroHandler = new KafkaAvroHandler(config.kafkaBrokerList, schemaDesc, config.kafkaTopicName)
         } else {
           kafkaHandler = new KafkaHandler(config.kafkaBrokerList, config.kafkaTopicName)
         }
+      }
+      else {
+        kinesisHandler = new KinesisHandler(config.kinesisStreamName)
       }
       // Start generating
       (eventsStartRange to eventsEndRange).foreach { eventCount =>
@@ -123,7 +127,7 @@ class Writer(eventsStartRange: Int,
               eventsText.clear()
             }
           }
-          else {
+          else if (config.destination == "kafka") {
             if (config.outputFormat == "avro") {
               kafkaAvroHandler.publishBuffered(eventsAvro)
               eventsAvro.clear()
@@ -131,6 +135,10 @@ class Writer(eventsStartRange: Int,
               kafkaHandler.publishBuffered(eventsText)
               eventsText.clear()
             }
+          }
+          else {
+            //kinesisHandler.publishBuffered(eventsText)
+            eventsText.clear()
           }
           batchCount = 0
         }
@@ -147,12 +155,15 @@ class Writer(eventsStartRange: Int,
         } else {
           fileHandlerText.close()
         }
-      } else {
+      } else if (config.destination == "kafka") {
         if (config.outputFormat == "avro") {
           kafkaAvroHandler.close()
         } else {
           kafkaHandler.close()
         }
+      }
+      else {
+        //kinesisHandler.close()
       }
     }
   }
