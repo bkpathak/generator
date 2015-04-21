@@ -104,6 +104,7 @@ class Writer(eventsStartRange: Int,
       }
       else {
         kinesisHandler = new KinesisHandler(config.kinesisStreamName)
+        kinesisHandler.createStream()
       }
       // Start generating
       (eventsStartRange to eventsEndRange).foreach { eventCount =>
@@ -137,7 +138,7 @@ class Writer(eventsStartRange: Int,
             }
           }
           else {
-            //kinesisHandler.publishBuffered(eventsText)
+            kinesisHandler.publishBuffered(eventsText)
             eventsText.clear()
           }
           batchCount = 0
