@@ -8,7 +8,7 @@ import com.cloudwick.generator.utils._
  * @author ashrith
  */
 class MovieGenerator {
-  val movieTitles = io.Source.fromURL(getClass.getResource("/movie_titles.csv"))
+  val movieTitles = scala.io.Source.fromURL(getClass.getResource("/movie_titles.csv"))
   val data = parseToMap(movieTitles.getLines())
   val random = Random
   val utils = new Utils
